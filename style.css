@@ -1,1 +1,139 @@
-
+/* == Basislayout & Reset == */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* == Gesamter Container für linke und rechte Hälfte == */
+  .container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    align-items: center; /* Zentriert vertikal (optional) */
+    background-color: white; /* Seitenhintergrund */
+  }
+  
+  /* == Linke Kalenderhälfte == */
+  .calendar-section {
+    flex: 1;
+    padding: 20px;
+    height: 90vh;       /* Füllhöhe abzüglich Rand */
+    display: flex;
+    flex-direction: column;
+    background-color: white; 
+  }
+  
+  .header {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #003366;
+    border-bottom: 2px solid #003366;
+    padding-bottom: 10px;
+  }
+  
+  .events-wrapper {
+    flex: 1;
+    overflow: hidden; /* Verhindert, dass scollbars außerhalb erscheinen */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #events-container {
+    flex: 1;
+    overflow-y: auto; 
+  }
+  
+  /* == Rechte Slideshowhälfte == */
+  .slideshow-section {
+    flex: 1;
+    height: 90vh;
+    position: relative;
+    overflow: hidden;
+    background-color: white; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* == Slideshow-Gestaltung == */
+  .slide {
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .slide.active {
+    opacity: 1;
+  }
+  
+  .slide img {
+    max-width: 100%;
+    max-height: 80%;
+    object-fit: contain;
+  }
+  
+  .slide-caption {
+    color: #666666;
+    margin-top: 20px;
+    font-size: 20px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  
+  /* == Gestaltung einzelner Events im Kalender == */
+  .event-item {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #666666;
+  }
+  
+  .event-day {
+    color: #003366;
+    font-size: 28px;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  .event-time,
+  .event-name,
+  .event-lecturer,
+  .event-room {
+    display: inline-block;
+    font-size: 16px;
+  }
+  
+  .event-time,
+  .event-name {
+    font-weight: bold;
+    margin-right: 10px;
+  }
+  
+  .event-lecturer {
+    margin-right: 10px;
+  }
+  
+  .day-header {
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+  
+  .today-marker {
+    background-color: #003366;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-left: 10px;
+  }
+  
