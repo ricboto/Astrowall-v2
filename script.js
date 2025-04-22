@@ -29,8 +29,8 @@ fetch('spring2025.ics')
     // 4) Array von Events aufbauen
     const events = vevents.map(v => {
       const ev = new ICAL.Event(v);
-      const [startDate, startTime] = parseICalDate(v.getFirstPropertyValue('dtstart'));
-      const [endDate, endTime]     = parseICalDate(v.getFirstPropertyValue('dtend'));
+      const [startDate, startTime] = parseICalDate(v.getFirstPropertyValue('DTSTART'));
+      const [endDate, endTime]     = parseICalDate(v.getFirstPropertyValue('DTEND'));
       const summary  = ev.summary;
       const location = ev.location;
       const lecturer = lecturerMap[summary] || "unbekannt";
