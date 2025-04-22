@@ -1,167 +1,80 @@
-/*******************************************************
- * Demo-CSV-Daten (Beispiel, inline).
- * In der Praxis würdest du sie per "fetch('events.csv')" laden.
- *******************************************************/
-const csvData = `Datum,Uhrzeit,Event,Dozent,Raum
-2023-06-15,09:00,Mathematik Grundlagen,Herr Müller,Raum A3
-2023-06-15,14:00,Englisch Konversation,Frau Schmidt,Raum B1
-2023-06-16,10:30,Physik Experimente,Herr Wagner,Raum C2
-2023-06-17,11:00,Geschichte Vortrag,Frau Meyer,Raum A1
-2023-06-17,15:30,Chemie Labor,Herr Fischer,Raum D4
-2023-06-18,08:45,Deutsch Grammatik,Frau Weber,Raum B2
-2023-06-19,13:15,Informatik Programmierung,Herr Becker,Raum E1
-2023-06-20,09:30,Biologie Seminar,Frau Hoffmann,Raum A2
-2023-06-21,10:00,Geographie Präsentation,Herr Schulz,Raum C3
-2023-06-22,14:45,Kunst Workshop,Frau Neumann,Raum F1
-2023-06-23,11:30,Musik Theorie,Herr Zimmermann,Raum B3
-2023-06-24,16:00,Sport Theorie,Frau Braun,Raum G2`;
+// 1) Mapping Eventname → Dozent
+const lecturerMap = {
+  "Computational Methods for Radiative Transfer": "Lucio Mayer",
+  // hier kannst du weitere Zuordnungen ergänzen...
+};
 
-/*******************************************************
- * CSV mittels Papa Parse parsen.
- *******************************************************/
-const parsedData = Papa.parse(csvData, {
-  header: true,
-  skipEmptyLines: true
-}).data;
-
-/*******************************************************
- * Hilfsfunktionen fürs Formatieren von Datum & Zeit
- *******************************************************/
-function formatDay(dateString) {
-  const date = new Date(dateString);
-  return date.getDate(); // Nur den Kalendertag
+// 2) Hilfsfunktion: '20250218T111500Z' → ['18.02.2025', '11:15']
+function parseICalDate(dtStr) {
+  const dt = ICAL.Time.fromString(dtStr);
+  // in JS-Datum umwandeln
+  const jsDate = dt.toJSDate();
+  const pad = n => String(n).padStart(2, "0");
+  const day   = pad(jsDate.getDate());
+  const month = pad(jsDate.getMonth()+1);
+  const year  = jsDate.getFullYear();
+  const hours   = pad(jsDate.getHours());
+  const minutes = pad(jsDate.getMinutes());
+  return [`${day}.${month}.${year}`, `${hours}:${minutes}`];
 }
 
-function formatWeekday(dateString) {
-  const weekdays = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-  const date = new Date(dateString);
-  return weekdays[date.getDay()];
-}
+// 3) .ics‑Datei laden und parsen
+fetch('spring2025.ics')
+  .then(r => r.text())
+  .then(icsText => {
+    const jcal = ICAL.parse(icsText);
+    const comp = new ICAL.Component(jcal);
+    const vevents = comp.getAllSubcomponents('vevent');
 
-function formatFullDate(dateString) {
-  const date = new Date(dateString);
-  return date.toDateString(); // "Thu Jun 15 2023" etc.
-}
-
-/*******************************************************
- * Events sortieren nach Datum/Zeit (aufsteigend)
- *******************************************************/
-parsedData.sort((a, b) => {
-  const dateA = new Date(`${a.Datum} ${a.Uhrzeit}`);
-  const dateB = new Date(`${b.Datum} ${b.Uhrzeit}`);
-  return dateA - dateB;
-});
-
-/*******************************************************
- * Events in den Container einfügen. Wir zeigen 
- * nur die nächsten 10 Events (Beispiel).
- *******************************************************/
-const eventsContainer = document.getElementById('events-container');
-const today = new Date();
-today.setHours(0, 0, 0, 0); // "Entzeitigen"
-
-const eventsToShow = parsedData.slice(0, 10);
-
-let currentDay = null;
-
-eventsToShow.forEach((event) => {
-  const eventDate = new Date(`${event.Datum} ${event.Uhrzeit}`);
-  const isToday = new Date(event.Datum).toDateString() === today.toDateString();
-  const eventDay = formatFullDate(event.Datum);
-
-  // Neuer Tag -> Tag-Überschrift einfügen
-  if (eventDay !== currentDay) {
-    currentDay = eventDay;
-    const dayHeader = document.createElement('div');
-    dayHeader.className = 'event-day day-header';
-
-    let dayText = `${formatDay(event.Datum)}. ${formatWeekday(event.Datum)}`;
-    if (isToday) {
-      dayText += `<span class="today-marker">Heute</span>`;
-    }
-    dayHeader.innerHTML = dayText;
-    eventsContainer.appendChild(dayHeader);
-  }
-
-  // Event-Element
-  const eventElement = document.createElement('div');
-  eventElement.className = 'event-item';
-
-  // Heutiges Event hervorheben
-  if (isToday) {
-    eventElement.style.backgroundColor = '#f0f8ff';
-    eventElement.style.padding = '8px';
-    eventElement.style.borderRadius = '4px';
-  }
-
-  eventElement.innerHTML = `
-    <div>
-      <span class="event-time">${event.Uhrzeit}</span>
-      <span class="event-name">${event.Event}</span>
-      <span class="event-lecturer">${event.Dozent}</span>
-      <span class="event-room">${event.Raum}</span>
-    </div>
-  `;
-  
-  eventsContainer.appendChild(eventElement);
-});
-
-/*******************************************************
- * Slideshow-Funktionalität
- *******************************************************/
-let currentSlide = 0;
-const slides = document.querySelectorAll('.slide');
-
-function showSlide(index) {
-  slides.forEach(slide => slide.classList.remove('active'));
-  slides[index].classList.add('active');
-}
-
-function nextSlide() {
-  currentSlide = (currentSlide + 1) % slides.length;
-  showSlide(currentSlide);
-}
-
-// Start slideshow
-showSlide(currentSlide);
-setInterval(nextSlide, 10000);
-
-/*******************************************************
- * Automatische Größen-Anpassung (Optional) 
- * für 10 Events; kann entfernt werden.
- *******************************************************/
-function adjustSizes() {
-  const container = document.querySelector('.events-wrapper');
-  const containerHeight = container.clientHeight;
-  const desiredEventHeight = containerHeight / 10;
-
-  const baseFontSize = Math.min(16, desiredEventHeight * 0.4);
-
-  // Schriftgrößen bei Zeit, Name, Lecturer, Raum
-  document.querySelectorAll('.event-time, .event-name, .event-lecturer, .event-room')
-    .forEach(el => {
-      el.style.fontSize = `${baseFontSize}px`;
+    // 4) Array von Events aufbauen
+    const events = vevents.map(v => {
+      const ev = new ICAL.Event(v);
+      const [startDate, startTime] = parseICalDate(v.getFirstPropertyValue('dtstart'));
+      const [endDate, endTime]     = parseICalDate(v.getFirstPropertyValue('dtend'));
+      const summary  = ev.summary;
+      const location = ev.location;
+      const lecturer = lecturerMap[summary] || "unbekannt";
+      return { startDate, startTime, endDate, endTime, summary, location, lecturer, timestamp: ev.startDate.toJSDate().getTime() };
     });
 
-  // Schriftgröße beim Tag
-  document.querySelectorAll('.event-day')
-    .forEach(el => {
-      el.style.fontSize = `${baseFontSize * 1.75}px`;
+    // 5) sortieren nach Startzeit
+    events.sort((a,b) => a.timestamp - b.timestamp);
+
+    // 6) in den DOM schreiben
+    const container = document.getElementById('events-container');
+    let currentDayLabel = null;
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    events.forEach(evt => {
+      // neuer Tag?
+      if (evt.startDate !== currentDayLabel) {
+        currentDayLabel = evt.startDate;
+        const dh = document.createElement('div');
+        dh.className = 'event-day';
+        dh.textContent = evt.startDate;
+        // Marker für heute
+        if (new Date(evt.startDate.split('.').reverse().join('-')).getTime() === today.getTime()) {
+          dh.innerHTML += '<span class="today-marker">Heute</span>';
+        }
+        container.appendChild(dh);
+      }
+
+      // Event‑Eintrag
+      const div = document.createElement('div');
+      div.className = 'event-item';
+      div.innerHTML = `
+        <div class="event-datetime">
+          <span class="event-start">${evt.startDate} / ${evt.startTime}</span>–
+          <span class="event-end">${evt.endDate} / ${evt.endTime}</span>
+        </div>
+        <div class="event-details">
+          <span class="event-name">${evt.summary}</span>
+          <span class="event-room">${evt.location}</span>
+        </div>
+        <div class="event-lecturer">Dozent: ${evt.lecturer}</div>
+      `;
+      container.appendChild(div);
     });
-}
-
-// Initial anpassen + bei Fensteränderung
-adjustSizes();
-window.addEventListener('resize', adjustSizes);
-
-/*******************************************************
- * Beispiel: CSV aus externer Datei laden (auskommentiert)
- *
- * fetch('events.csv')
- *   .then(response => response.text())
- *   .then(csvText => {
- *     const parsed = Papa.parse(csvText, { header: true }).data;
- *     // ... weiterverarbeiten wie oben ...
- *   });
- *******************************************************/
+  })
+  .catch(err => console.error('Fehler beim Laden der ICS-Datei:', err));
 
